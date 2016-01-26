@@ -6,8 +6,13 @@ var StartGame = 'let\'s do the shit!';
 var EndGame = 'Game Over! Mother Fucker!';
 var GetScore = 'get score';
 
-var boxWidth = window.document.documentElement.clientWidth / 3 - 2;
-var boxHeight = window.document.documentElement.clientHeight / 11 - 2;
+var positionWidth = window.document.documentElement.clientWidth / 3;
+var positionHeight = window.document.documentElement.clientHeight / 12;
+
+var boxWidth = positionWidth - 4;
+var boxHeight = positionHeight - 4;
+
+var gameId = null;
 
 var colors = ["#FF0000", "#00FF00", "#0000FF", "#CCFF00", "#FF66FF", "#CC00FF", "#99FFFF", "#009966"];
 
@@ -16,6 +21,7 @@ function roundRect(ctx, x, y, w, h, r, style) {
   if (w < 2 * r) r = w / 2;
   if (h < 2 * r) r = h / 2;
   ctx.strokeStyle = style;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(x+r, y);
   ctx.arcTo(x+w, y, x+w, y+h, r);
@@ -28,10 +34,14 @@ function roundRect(ctx, x, y, w, h, r, style) {
 // 逻辑界面
 var GameUI = React.createClass({
   getInitialState: function() {
-    return {score: 0, isGameStart: false, gameOver: false};
+    return {
+      score: 0, 
+      isGameStart: false, 
+      gameOver: false
+    };
   },
   componentDidMount: function() {
-    PubSub.subscribe(EndGame, this.leftBoxAction);
+    PubSub.subscribe(EndGame, this.endGame);
     PubSub.subscribe(GetScore, this.updateScore);
   },
   leftBoxAction: function(event) {
@@ -58,8 +68,10 @@ var GameUI = React.createClass({
       isGameStart: false,
       gameOver: true
     });
+
+    clearTimeout(gameId);
   },
-  updateScore: function(score) {
+  updateScore: function(topic, score) {
     var total = this.state.score + score;
     this.setState({
       score: total
@@ -90,15 +102,24 @@ var GameUI = React.createClass({
 // 游戏界面
 var Game = React.createClass({
   getInitialState: function() {
-    return {leftBoxes: [], centerBoxes: [], rightBoxes: [], isSelected: false, selectedBox: '', score: 0, ctx: null};
+    return {
+      leftBoxes: [], 
+      centerBoxes: [], 
+      rightBoxes: [], 
+      isSelected: false, 
+      selectedBox: '',
+      preSelectedBox: '',
+      score: 0, 
+      ctx: null
+    };
   },
   componentDidMount: function () {
     // 订阅搬箱子
     PubSub.subscribe(LeftBoxAction, this.leftBoxAction);
-    PubSub.subscribe(RightBoxAction, this.centerBoxAction);
-    PubSub.subscribe(CenterBoxAction, this.rightBoxAction);
+    PubSub.subscribe(CenterBoxAction, this.centerBoxAction);
+    PubSub.subscribe(RightBoxAction, this.rightBoxAction);
 
-    PubSub.subscribe(StartGame, this.preStartGame);
+    PubSub.subscribe(StartGame, this.game);
 
     // 获取canvas 2d引用
     this.setState({
@@ -116,66 +137,152 @@ var Game = React.createClass({
     });    
   },
   leftBoxAction: function() {
-    !this.state.isSelected ? this.select('left') : this.drop('left');
+    !this.state.isSelected ? this.select('left') : this.moving('left');
   },
   centerBoxAction: function() {
-    !this.state.isSelected ? this.select('center') : this.drop('center');
+    !this.state.isSelected ? this.select('center') : this.moving('center');
   },
   rightBoxAction: function() {
-    !this.state.isSelected ? this.select('right') : this.drop('right');
+    !this.state.isSelected ? this.select('right') : this.moving('right');
   },
   select: function(type) {
+    // 这里选择箱子逻辑
+    var position = 0;
+    var boxes = null;
+    switch(type) {
+      case 'center':
+        position = positionWidth;
+        boxes = this.state.centerBoxes;
+        break;
+      case 'left':
+        position = 0;
+        boxes = this.state.leftBoxes;
+        break;
+      case 'right':
+        position = positionWidth * 2;
+        boxes = this.state.rightBoxes;
+        break;
+    }
+    if (boxes.length === 0) {
+      // 如果改列箱子为空即返回
+      return ;
+    }
+    var context = this.state.ctx;
+    var i = boxes.length - 1;
     this.setState({
       isSelected: true,
-      selectedBox: type
+      selectedBox: boxes[i],
+      preSelectedBox: type
     });
-    // 这里选择箱子逻辑
-    console.log('select ' + type);
+    context.fillStyle = boxes[i];
+    roundRect(context, position + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, '#fff');
+    context.stroke();
+    context.fill();
+  },
+  moving: function(type) {
+    // 这里消除移动的箱子
+    var position = 0;
+    var boxes = null;
+    var bgColor = '#000066';
+    switch(this.state.preSelectedBox) {
+      case 'center':
+        position = positionWidth;
+        boxes = this.state.centerBoxes;
+        bgColor = '#330066';
+        break;
+      case 'left':
+        position = 0;
+        boxes = this.state.leftBoxes;
+        break;
+      case 'right':
+        position = positionWidth * 2;
+        boxes = this.state.rightBoxes;
+        break;
+    }
+    
+    var context = this.state.ctx;
+    var i = boxes.length - 1;
+    context.fillStyle = bgColor;
+    context.fillRect(position, positionHeight * i, positionWidth, positionHeight);
+    this.setState({
+      preSelectedBox: ''
+    });
+    boxes.pop();
+    this.drop(type);
   },
   drop: function(type) {
+    // 这里放置箱子逻辑
+    var position = 0;
+    var boxes = null;
+    switch(type) {
+      case 'center':
+        position = positionWidth;
+        boxes = this.state.centerBoxes;
+        break;
+      case 'left':
+        position = 0;
+        boxes = this.state.leftBoxes;
+        break;
+      case 'right':
+        position = positionWidth * 2;
+        boxes = this.state.rightBoxes;
+        break;
+    }
+
+    boxes.push(this.state.selectedBox);
     this.setState({
       isSelected: false,
       selectedBox: ''
     });
-    // 这里放置箱子逻辑
-    console.log('drop ' + type);
+    var context = this.state.ctx;
+    var i = boxes.length - 1;
+    context.fillStyle = boxes[i];
+    roundRect(context, position + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, '#000');
+    context.stroke();
+    context.fill();
+
+    // 每次移动箱子检查是否得分
+    this.removeBoxes(boxes, type);
   },
   moveDownBoxes: function() {
-    var ctx = this.state.ctx;
+    var context = this.state.ctx;
 
     // 左列箱子
     var lefts = this.state.leftBoxes;
     for(var i = 0; i < lefts.length; i++){
-      context.save();
+      // context.save();
       context.fillStyle = lefts[i];
-      roundRect(context, lefts[i].x, lefts[i].y, lefts[i].width, lefts[i].height, 10, lefts[i].linecolor);
+      roundRect(context, 0 + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      context.restore();
+      // context.restore();
     }
 
     // 中间箱子
     var centers = this.state.centerBoxes;
-    for(var i = 0; i < centers.length; i++){
-      context.save();
-      context.fillStyle = centers[i];
-      roundRect(context, centers[i].x, centers[i].y, centers[i].width, centers[i].height, 10, centers[i].linecolor);
+    for(var j = 0; j < centers.length; j++){
+      // context.save();
+      context.fillStyle = centers[j];
+      roundRect(context, positionWidth + 1, positionHeight * j + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      context.restore();
+      // context.restore();
     }
 
     // 右边箱子
     var rights = this.state.rightBoxes;
-    for(var i = 0; i < rights.length; i++){
-      context.save();
-      context.fillStyle = rights[i];
-      roundRect(context, rights[i].x, rights[i].y, rights[i].width, rights[i].height, 10, rights[i].linecolor);
+    for(var k = 0; k < rights.length; k++){
+      // context.save();
+      context.fillStyle = rights[k];
+      roundRect(context, positionWidth * 2 + 1, positionHeight * k + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      context.restore();
+      // context.restore();
     }
 
+    if (lefts.length > 12 || centers.length > 12 || rights.length > 12) {
+      PubSub.publish(EndGame);
+    }
 
   },
   pushBox: function(boxes) {
@@ -184,16 +291,15 @@ var Game = React.createClass({
     //按得分增加游戏难度
     //每得100分增加一种箱子
     var i;
-    i = i==8 ? 8 : (3 + Math.floor(point/100));
+    i = i==8 ? 8 : (3 + Math.floor(this.state.score/100));
     num = Math.floor(Math.random()*i);
     boxColor = colors[num];
-    boxes.push(box);
-
+    boxes.unshift(boxColor);
   },
-  removeBoxes: function(boxes) {
-    var removeColor = boxes[0];//将该方位的一个箱子颜色作为消除标准
+  removeBoxes: function(boxes, type) {
+    var removeColor = boxes[boxes.length - 1];//将该方位的一个箱子颜色作为消除标准
     var count = 1;//记录相同颜色的箱子有几个
-    for(var i=1;i<boxes.length;i++){
+    for(var i = boxes.length - 2; i >= 0 ; i--){
       if(boxes[i] != removeColor) {
         break;
       } else {
@@ -203,24 +309,39 @@ var Game = React.createClass({
     if(count >= 3){
       //颜色相同的箱子大于3时则进行消除
       // context.clearRect(boxes[count-1].x - 1, boxes.length*40 - count*40, boxes[count-1].width + 2, count*40 + 2);
-      boxes.splice(0,count);
+      var bgColor = '#000066';
+      var position = 0;
+      switch(type) {
+        case 'center':
+          position = positionWidth;
+          bgColor = '#330066';
+          break;
+        case 'left':
+          position = 0;
+          break;
+        case 'right':
+          position = positionWidth * 2;
+          break;
+      }
+      var i = 0;
+      var context = this.state.ctx;
+      context.fillStyle = bgColor;
+      context.fillRect(position, positionHeight * (boxes.length - count), positionWidth, positionHeight * count);
+      boxes.splice(0, count);
 
       // score
       PubSub.publish(GetScore, count);
       this.setState({score: this.state.score + count});
     }
   },
-  preStartGame: function() {
-    this.setState({
-      ctx: document.getElementById('Game').getContext('2d')
-    });
-  },
   game: function() {
+    // 开始游戏
     this.pushBox(this.state.leftBoxes);
     this.pushBox(this.state.centerBoxes);
     this.pushBox(this.state.rightBoxes);
+    this.moveDownBoxes();
 
-    this.moveDownBoxes()
+    gameId = setTimeout(this.game, 1500);
 
     
   },
