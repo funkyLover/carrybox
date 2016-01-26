@@ -250,34 +250,34 @@ var Game = React.createClass({
     // 左列箱子
     var lefts = this.state.leftBoxes;
     for(var i = 0; i < lefts.length; i++){
-      // context.save();
+      context.save();
       context.fillStyle = lefts[i];
       roundRect(context, 0 + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      // context.restore();
+      context.restore();
     }
 
     // 中间箱子
     var centers = this.state.centerBoxes;
     for(var j = 0; j < centers.length; j++){
-      // context.save();
+      context.save();
       context.fillStyle = centers[j];
       roundRect(context, positionWidth + 1, positionHeight * j + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      // context.restore();
+      context.restore();
     }
 
     // 右边箱子
     var rights = this.state.rightBoxes;
     for(var k = 0; k < rights.length; k++){
-      // context.save();
+      context.save();
       context.fillStyle = rights[k];
       roundRect(context, positionWidth * 2 + 1, positionHeight * k + 1, boxWidth, boxHeight, 10, '#000');
       context.stroke();
       context.fill();
-      // context.restore();
+      context.restore();
     }
 
     if (lefts.length > 12 || centers.length > 12 || rights.length > 12) {
@@ -327,8 +327,10 @@ var Game = React.createClass({
       var context = this.state.ctx;
       context.fillStyle = bgColor;
       context.fillRect(position, positionHeight * (boxes.length - count), positionWidth, positionHeight * count);
-      boxes.splice(0, count);
-
+      boxes.splice(boxes.length - count, count);
+      // var o = {};
+      // o[type + 'Boxes'] = boxes;
+      // this.setState(o);
       // score
       PubSub.publish(GetScore, count);
       this.setState({score: this.state.score + count});
