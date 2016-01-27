@@ -1,7 +1,5 @@
 // topic
-var LeftBoxAction = 'select or drop left box';
-var CenterBoxAction = 'select or drop center box';
-var RightBoxAction = 'select or drop right box';
+var BoxAction = 'select or drop box';
 var StartGame = 'let\'s do the shit!';
 var EndGame = 'Game Over! Mother Fucker!';
 var GetScore = 'get score';
@@ -44,15 +42,6 @@ var GameUI = React.createClass({
     PubSub.subscribe(EndGame, this.endGame);
     PubSub.subscribe(GetScore, this.updateScore);
   },
-  leftBoxAction: function(event) {
-    PubSub.publish(LeftBoxAction);
-  },
-  centerBoxAction: function(event) {
-    PubSub.publish(CenterBoxAction);
-  },
-  rightBoxAction: function(event) {
-    PubSub.publish(RightBoxAction);
-  },
   startGame: function(event) {
     event.stopPropagation();
     this.state.isGameStart ? this.setState({
@@ -85,15 +74,16 @@ var GameUI = React.createClass({
               </div> : 
               <div>
                 <p className='score'>得分为: {this.state.score}</p>
-                <div className='tap-pad'>
-                  <div className='cols' onClick={this.leftBoxAction}/>
-                  <div className='cols' onClick={this.centerBoxAction}/>
-                  <div className='cols' onClick={this.rightBoxAction}/>
-                </div>
               </div>
+    var className = !this.state.isGameStart ? 'game-ui' : 'game-ui down';
     return (
-      <section className='game-ui' width={this.props.width} height={this.props.height}>
+      <section className={className} width={this.props.width} height={this.props.height}>
         {UI}
+        <div className='tap-pad'>
+          <div className='cols' />
+          <div className='cols' />
+          <div className='cols' />
+        </div>
       </section>
     );
   }
@@ -115,35 +105,26 @@ var Game = React.createClass({
   },
   componentDidMount: function () {
     // 订阅搬箱子
-    PubSub.subscribe(LeftBoxAction, this.leftBoxAction);
-    PubSub.subscribe(CenterBoxAction, this.centerBoxAction);
-    PubSub.subscribe(RightBoxAction, this.rightBoxAction);
-
     PubSub.subscribe(StartGame, this.game);
 
     // 获取canvas 2d引用
     this.setState({
       ctx: document.getElementById('Game').getContext('2d')
-    }, function() {
-      var ctx = this.state.ctx;
-      ctx.fillStyle = '#000066';
-      ctx.fillRect(0, 0, this.props.width/3, this.props.height);
-
-      ctx.fillStyle =  '#330066';
-      ctx.fillRect(this.props.width/3, 0, this.props.width/3, this.props.height);
-
-      ctx.fillStyle =  '#000066';
-      ctx.fillRect(this.props.width/3 * 2, 0, this.props.width/3, this.props.height);
+    });
+    var self = this;
+    $('#Game').tap(function(event) {
+      var x = event._args.x1;
+      if (x < positionWidth) {
+        self.boxAction('left');
+      } else if(x >= positionWidth && x <= 2 * positionWidth) {
+        self.boxAction('center');
+      } else {
+        self.boxAction('right');
+      }
     });    
   },
-  leftBoxAction: function() {
-    !this.state.isSelected ? this.select('left') : this.moving('left');
-  },
-  centerBoxAction: function() {
-    !this.state.isSelected ? this.select('center') : this.moving('center');
-  },
-  rightBoxAction: function() {
-    !this.state.isSelected ? this.select('right') : this.moving('right');
+  boxAction: function(type) {
+    !this.state.isSelected ? this.select(type) : this.moving(type);
   },
   select: function(type) {
     // 这里选择箱子逻辑
@@ -325,13 +306,9 @@ var Game = React.createClass({
       }
       var i = 0;
       var context = this.state.ctx;
-      context.fillStyle = bgColor;
-      context.fillRect(position, positionHeight * (boxes.length - count), positionWidth, positionHeight * count);
+      context.clearRect(position, positionHeight * (boxes.length - count), positionWidth, positionHeight * count);
       boxes.splice(boxes.length - count, count);
-      // var o = {};
-      // o[type + 'Boxes'] = boxes;
-      // this.setState(o);
-      // score
+
       PubSub.publish(GetScore, count);
       this.setState({score: this.state.score + count});
     }
@@ -343,7 +320,7 @@ var Game = React.createClass({
     this.pushBox(this.state.rightBoxes);
     this.moveDownBoxes();
 
-    gameId = setTimeout(this.game, 1500);
+    gameId = setTimeout(this.game, 2000);
 
     
   },
