@@ -3,6 +3,11 @@ var BoxAction = 'select or drop box';
 var StartGame = 'let\'s do the shit!';
 var EndGame = 'Game Over! Mother Fucker!';
 var GetScore = 'get score';
+var RestartGame = 'reset game';
+
+var isCenter = false;
+var isLeft = false;
+var isRight = false;
 
 var positionWidth = window.document.documentElement.clientWidth / 3;
 var positionHeight = window.document.documentElement.clientHeight / 12;
@@ -35,7 +40,7 @@ var GameUI = React.createClass({
     return {
       score: 0, 
       isGameStart: false, 
-      gameOver: false
+      isGameOver: false
     };
   },
   componentDidMount: function() {
@@ -44,18 +49,17 @@ var GameUI = React.createClass({
   },
   startGame: function(event) {
     event.stopPropagation();
-    this.state.isGameStart ? this.setState({
+    this.state.isGameOver ? PubSub.publish(RestartGame) : PubSub.publish(StartGame);
+    this.setState({
       score: 0,
-      isGameStart: false
-    }) : this.setState({
-      isGameStart: true
-    });
-    PubSub.publish(StartGame);
+      isGameStart: true,
+      isGameOver: false
+    });    
   },
   endGame: function(event) {
     this.setState({
       isGameStart: false,
-      gameOver: true
+      isGameOver: true
     });
 
     clearTimeout(gameId);
@@ -67,14 +71,33 @@ var GameUI = React.createClass({
     });
   },
   render: function() {
-    var UI = !this.state.isGameStart ? 
-              <div>
-                <h1>搬箱子</h1>
-                <button onClick={this.startGame}>开始游戏</button>
-              </div> : 
-              <div>
-                <p className='score'>得分为: {this.state.score}</p>
-              </div>
+    var UI = null;
+    if (!this.state.isGameStart) {
+      if (this.state.isGameOver) {
+        UI = <div className='intro'>
+              <h1>搬箱子</h1>
+              <p>你的得分为{this.state.score}</p>
+              <p>多少分可以换什么</p>
+              <p>多少分可以换什么</p>
+              <p>多少分可以换什么</p>
+              <button onClick={this.startGame}>重开游戏</button>
+             </div>
+      } else {
+        UI = <div className='intro'>
+              <h1>搬箱子</h1>
+              <p>-点击屏幕选择或移动箱子</p>
+              <p>-到猴事多多花街店出示得分截图</p>
+              <p>-即刻兑换窗花赠品或购物折扣</p>
+              <p>-兑换规则见游戏结束画面</p>
+              <button onClick={this.startGame}>开始游戏</button>
+             </div>
+      }
+    } else {
+      UI = <div>
+            <p className='score'>得分为: {this.state.score}</p>
+           </div>
+    }
+              
     var className = !this.state.isGameStart ? 'game-ui' : 'game-ui down';
     return (
       <section className={className} width={this.props.width} height={this.props.height}>
@@ -104,8 +127,10 @@ var Game = React.createClass({
     };
   },
   componentDidMount: function () {
-    // 订阅搬箱子
+    // 订阅游戏开始
     PubSub.subscribe(StartGame, this.game);
+    // 订阅再次游戏
+    PubSub.subscribe(RestartGame, this.resetGame);
 
     // 获取canvas 2d引用
     this.setState({
@@ -183,8 +208,7 @@ var Game = React.createClass({
     
     var context = this.state.ctx;
     var i = boxes.length - 1;
-    context.fillStyle = bgColor;
-    context.fillRect(position, positionHeight * i, positionWidth, positionHeight);
+    context.clearRect(position, positionHeight * i - 1, positionWidth, positionHeight + 2);
     this.setState({
       preSelectedBox: ''
     });
@@ -225,43 +249,27 @@ var Game = React.createClass({
     // 每次移动箱子检查是否得分
     this.removeBoxes(boxes, type);
   },
-  moveDownBoxes: function() {
+  moveDownBoxes: function(boxes, x, flag) {
     var context = this.state.ctx;
-
-    // 左列箱子
-    var lefts = this.state.leftBoxes;
-    for(var i = 0; i < lefts.length; i++){
-      context.save();
-      context.fillStyle = lefts[i];
-      roundRect(context, 0 + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, '#000');
+    var type = this.state.preSelectedBox;
+    var lineColor = '#000';
+    var range = boxes.length - 1;
+    for(var i = 0; i < range; i++){
+      // context.save();
+      context.fillStyle = boxes[i];
+      roundRect(context, x + 1, positionHeight * i + 1, boxWidth, boxHeight, 10, lineColor);
       context.stroke();
       context.fill();
-      context.restore();
+      // context.restore();
     }
-
-    // 中间箱子
-    var centers = this.state.centerBoxes;
-    for(var j = 0; j < centers.length; j++){
-      context.save();
-      context.fillStyle = centers[j];
-      roundRect(context, positionWidth + 1, positionHeight * j + 1, boxWidth, boxHeight, 10, '#000');
-      context.stroke();
-      context.fill();
-      context.restore();
+    if (flag) { 
+      lineColor = '#fff';
     }
-
-    // 右边箱子
-    var rights = this.state.rightBoxes;
-    for(var k = 0; k < rights.length; k++){
-      context.save();
-      context.fillStyle = rights[k];
-      roundRect(context, positionWidth * 2 + 1, positionHeight * k + 1, boxWidth, boxHeight, 10, '#000');
-      context.stroke();
-      context.fill();
-      context.restore();
-    }
-
-    if (lefts.length > 12 || centers.length > 12 || rights.length > 12) {
+    context.fillStyle = boxes[range];
+    roundRect(context, x + 1, positionHeight * range + 1, boxWidth, boxHeight, 10, lineColor);
+    context.stroke();
+    context.fill();
+    if (boxes.length > 12) {
       PubSub.publish(EndGame);
     }
 
@@ -290,12 +298,10 @@ var Game = React.createClass({
     if(count >= 3){
       //颜色相同的箱子大于3时则进行消除
       // context.clearRect(boxes[count-1].x - 1, boxes.length*40 - count*40, boxes[count-1].width + 2, count*40 + 2);
-      var bgColor = '#000066';
       var position = 0;
       switch(type) {
         case 'center':
           position = positionWidth;
-          bgColor = '#330066';
           break;
         case 'left':
           position = 0;
@@ -318,11 +324,32 @@ var Game = React.createClass({
     this.pushBox(this.state.leftBoxes);
     this.pushBox(this.state.centerBoxes);
     this.pushBox(this.state.rightBoxes);
-    this.moveDownBoxes();
+
+    isCenter = this.state.preSelectedBox === 'center';
+    isLeft = this.state.preSelectedBox === 'left';
+    isRight = this.state.preSelectedBox === 'right';
+
+    this.moveDownBoxes(this.state.leftBoxes, 0, isLeft);
+    this.moveDownBoxes(this.state.centerBoxes, positionWidth, isCenter);
+    this.moveDownBoxes(this.state.rightBoxes, positionWidth * 2, isRight);
+
 
     gameId = setTimeout(this.game, 2000);
 
     
+  },
+  resetGame: function() {
+    this.setState({
+      leftBoxes: [], 
+      centerBoxes: [], 
+      rightBoxes: [], 
+      isSelected: false, 
+      selectedBox: '',
+      preSelectedBox: '',
+      score: 0
+    });
+    this.state.ctx.clearRect(0, 0, this.props.width, this.props.height);
+    this.game();
   },
   render: function() {
     return (

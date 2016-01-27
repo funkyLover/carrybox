@@ -56,24 +56,7 @@ body {
   &.down {
     position: static;
   }
-
-  h1 {
-    font-weight: 100;
-    margin-top: 1rem;
-    font-size: 0.3rem;
-    color: #fff;
-  }
-  button {
-    background: $buttonColor;
-    border-radius: 0.05rem;
-    display: block;
-    font-size: 0.3rem;
-    margin: 0 auto;
-    padding: 0.1rem;
-    width: 2rem;
-    color: #fff;
-    border: none;
-  }
+  
   .score {
     font-weight: bold;
     color: #fff;
@@ -82,6 +65,38 @@ body {
     text-align: left;
     z-index: 1;
     position: absolute;
+  }
+
+  .intro {
+    margin-top: 1rem;
+    padding-top: 0.1rem;
+    padding-bottom: 0.3rem;
+    background-color: rgba(0,0,0,0.5);
+    p {
+      color: #fff;
+      width: 2rem;
+      margin-left: 50%;
+      transform: translate(-50%);
+      text-align: left;
+    }
+    h1 {
+      margin-bottom: 0.1rem;
+      font-weight: 100;
+      margin-top: 0;
+      font-size: 0.3rem;
+      color: #fff;
+    }
+    button {
+      background: $buttonColor;
+      border-radius: 0.05rem;
+      display: block;
+      font-size: 0.3rem;
+      margin: 0 auto;
+      padding: 0.1rem;
+      width: 2rem;
+      color: #fff;
+      border: none;
+    }
   }
 }
 
