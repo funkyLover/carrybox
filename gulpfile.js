@@ -2,6 +2,9 @@ var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 // var sass = require('gulp-ruby-sass');
 var del = require('del');
+var processorsArray = [  
+    require('autoprefixer')({browsers:['last 2 versions','iOS 7.0-9.2']})  
+];
 
 var fileUrl = '';
 
@@ -32,6 +35,7 @@ gulp.task('sass', function () {
     .pipe($.changed('build'))
     .pipe($.sass().on('error', $.sass.logError))
     .pipe($.replace('@@FILEURL', fileUrl))
+    .pipe($.postcss(processorsArray))
     .pipe(gulp.dest('build'))
     .pipe($.connect.reload());
 });
