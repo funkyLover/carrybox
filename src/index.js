@@ -61,7 +61,8 @@ var GameUI = React.createClass({
       isGameStart: false,
       isGameOver: true
     });
-
+    
+    document.title = '搬箱子有猴事!我得了足足' + this.state.score + '分!不服来战!';
     clearTimeout(gameId);
   },
   updateScore: function(topic, score) {
@@ -77,9 +78,11 @@ var GameUI = React.createClass({
         UI = <div className='intro'>
               <h1>搬箱子</h1>
               <p>你的得分为{this.state.score}</p>
-              <p>多少分可以换什么</p>
-              <p>多少分可以换什么</p>
-              <p>多少分可以换什么</p>
+              <p>100分可获赠品窗花一份</p>
+              <p>150分购物全单9.5折</p>
+              <p>200分购物全单9折</p>
+              <p>300分购物全单8折</p>
+              <p>400分请让我拜你为师!</p>
               <button onClick={this.startGame}>重开游戏</button>
              </div>
       } else {
