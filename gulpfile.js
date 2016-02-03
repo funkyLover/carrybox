@@ -43,7 +43,7 @@ gulp.task('sass', function () {
 gulp.task('connect', function() {
   $.connect.server({
     root: ['build'],
-    port: 8080,
+    port: 8081,
     livereload: true
   });
 });
@@ -59,7 +59,7 @@ gulp.task('lint', function() {
 
 gulp.task('open', ['connect'], function() {
   gulp.src('./')
-    .pipe($.open({ uri: 'localhost:8080', app: '/Applications/Google\ Chrome.app' }));
+    .pipe($.open({ uri: 'localhost:8081', app: '/Applications/Google\ Chrome.app' }));
 });
 
 gulp.task('watch', function() {
@@ -68,15 +68,21 @@ gulp.task('watch', function() {
   gulp.watch('src/**/*.scss', ['sass']);
 });
 
+gulp.task('image', function() {
+  return gulp.src('*.jpg')
+    .pipe(gulp.dest('build'))
+    .pipe($.connect.reload());
+})
+
 gulp.task('default', ['clean'], function() {
   fileUrl = '';
-  gulp.start('lint', 'es6', 'sass', 'html', 'watch', 'open');
+  gulp.start('lint', 'es6', 'sass', 'html', 'image', 'watch', 'open');
 });
 
 
 gulp.task('build', ['clean'], function() {
   fileUrl = '';
-  gulp.start('lint', 'es6', 'sass', 'html');
+  gulp.start('lint', 'es6', 'sass', 'html', 'image');
 });
 
 

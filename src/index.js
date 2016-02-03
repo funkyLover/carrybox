@@ -358,6 +358,16 @@ var Game = React.createClass({
   }
 });
 
+var WCIcon = React.createClass({
+  render: function() {
+    return (
+        <div id='wx_logo' className='weixin-icon'>
+          <img src='icon.jpg' />
+        </div>
+    )
+  }
+});
+
 // 容器
 var GameWrapper = React.createClass({
   propTypes: {
@@ -367,6 +377,7 @@ var GameWrapper = React.createClass({
   render: function() {
     return (
       <section className='game-wrapper' width={this.props.width} height={this.props.height} >
+        <WCIcon />
         <GameUI width={this.props.width} height={this.props.height}/>
         <Game width={this.props.width} height={this.props.height}/>
       </section>

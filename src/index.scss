@@ -20,6 +20,11 @@ body {
 }
 
 .game-wrapper {
+  .weixin-icon {
+    margin: 0;
+    display: none;
+  }
+
   position: relative;
 
   .tap-pad {
