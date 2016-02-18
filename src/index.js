@@ -73,16 +73,22 @@ var GameUI = React.createClass({
   },
   render: function() {
     var UI = null;
+    var TP = <div className='tap-pad'>
+              <div className='cols' />
+              <div className='cols' />
+              <div className='cols' />
+            </div>
     if (!this.state.isGameStart) {
       if (this.state.isGameOver) {
         UI = <div className='intro'>
               <h1>搬箱子</h1>
               <p>你的得分为{this.state.score}</p>
-              <p>100分可获赠品窗花一份</p>
-              <p>150分购物全单9.5折</p>
-              <p>200分购物全单9折</p>
-              <p>300分购物全单8折</p>
-              <p>400分请让我拜你为师!</p>
+              <p>50分及以上可获赠品窗花一份</p>
+              <p>100分及以上购物全单9.5折</p>
+              <p>200分及以上购物全单9折</p>
+              <p>300分及以上购物全单8.5折</p>
+              <p>到店面出示得分截图即可</p>
+              <p>广州海珠花市G290档~期待你的光临</p>
               <button onClick={this.startGame}>重开游戏</button>
              </div>
       } else {
@@ -99,17 +105,24 @@ var GameUI = React.createClass({
       UI = <div>
             <p className='score'>得分为: {this.state.score}</p>
            </div>
+      TP = <div className='tap-pad'>
+            <div className='cols'>
+              <div className='btn' />
+            </div>
+            <div className='cols' >
+              <div className='btn' />
+            </div>
+            <div className='cols' >
+              <div className='btn' />
+            </div>
+          </div>
     }
               
     var className = !this.state.isGameStart ? 'game-ui' : 'game-ui down';
     return (
       <section className={className} width={this.props.width} height={this.props.height}>
         {UI}
-        <div className='tap-pad'>
-          <div className='cols' />
-          <div className='cols' />
-          <div className='cols' />
-        </div>
+        {TP}
       </section>
     );
   }

@@ -1,5 +1,6 @@
 $bg: #fff;
-$buttonColor: #185da8;
+$buttonColor: #f4e076;
+$fontColor: #471f0c;
 
 /*320px布局*/
 html { 
@@ -17,6 +18,21 @@ body {
   max-height: 5rem;
   background-color: $bg;
   overflow: hidden;
+}
+
+@keyframes blbl {
+    0% {
+        opacity: 1;
+        transform: scale(0.5, 0.5);
+    }
+    60% {
+        // opacity: 0.5;
+        transform: scale(1.5,1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2, 2);
+    }
 }
 
 .game-wrapper {
@@ -38,14 +54,28 @@ body {
       width: 33.3%;
       height: 100%;
       overflow: hidden;
-      background-color: #000066;
+      background-color: #cb1b0d;
+      position: relative;
 
       &:nth-child(even) {
-        background-color: #330066;
+        background-color: #e6373e;
       }
 
       &:last-child {
         width: 33.4%
+      }
+
+      .btn {
+        width: 0.2rem;
+        height: 0.2rem;
+        border-radius: 0.2rem;
+        color: $fontColor;
+        background-color: #fff;
+        position: absolute;
+        bottom: 0.4rem;
+        left: 50%;
+        margin-left: -0.1rem;
+        animation: blbl 1.5s infinite linear;
       }
     }
   }
@@ -64,7 +94,7 @@ body {
   
   .score {
     font-weight: bold;
-    color: #fff;
+    color: $fontColor;
     margin: 0.03rem 0.03rem;
     font-size: 0.14rem;
     text-align: left;
@@ -73,14 +103,14 @@ body {
   }
 
   .intro {
-    margin-top: 1rem;
+    margin-top: 0.8rem;
     padding-top: 0.1rem;
     padding-bottom: 0.3rem;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(255,255,255,0.8);
     p {
-      color: #fff;
+      color: $fontColor;
       width: 2rem;
-      margin: 0.15rem auto;
+      margin: 0.1rem auto;
       text-align: left;
     }
     h1 {
@@ -88,10 +118,10 @@ body {
       font-weight: 100;
       margin-top: 0;
       font-size: 0.3rem;
-      color: #fff;
+      color: $fontColor;
     }
     button {
-      background: $buttonColor;
+      background: #e6373e;
       border-radius: 0.05rem;
       display: block;
       font-size: 0.3rem;
@@ -103,6 +133,9 @@ body {
     }
   }
 }
+
+
+
 
 /* iphone 6 */
 @media (min-device-width: 375px) and (max-device-width: 667px ) and (-webkit-min-device-pixel-ratio: 2 ){
